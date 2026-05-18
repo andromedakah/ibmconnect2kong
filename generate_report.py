@@ -4,6 +4,7 @@ Generate an HTML migration report for IBM API Connect to Kong Gateway migration.
 Analyzes all IBM API YAML files and their Kong output to produce a comprehensive report.
 """
 
+import argparse
 import yaml
 import os
 import json
@@ -11,20 +12,18 @@ import collections
 from datetime import datetime
 from pathlib import Path
 
-API_DIR = "stef-ibm2kong/api"
-KONG_DIR = "stef-ibm2kong/kong-output"
 
-def analyze_apis():
+def analyze_apis(api_dir, kong_dir):
     apis = []
     policy_counts = collections.Counter()
     total_routes = 0
     total_catalogs = 0
     catalog_names = set()
 
-    for fname in sorted(os.listdir(API_DIR)):
+    for fname in sorted(os.listdir(api_dir)):
         if not fname.endswith(".yaml"):
             continue
-        fpath = os.path.join(API_DIR, fname)
+        fpath = os.path.join(api_dir, fname)
         try:
             with open(fpath) as f:
                 spec = yaml.safe_load(f)
@@ -159,7 +158,7 @@ def analyze_apis():
     }
 
 
-def generate_html_report(data):
+def generate_html_report(data, kong_dir):
     total = data["total_apis"]
     fully_migrated = sum(1 for a in data["apis"] if not a["policies_custom"])
     needs_custom = sum(1 for a in data["apis"] if a["policies_custom"])
@@ -176,8 +175,8 @@ def generate_html_report(data):
 
     # Kong output file count
     kong_files = 0
-    if os.path.isdir(KONG_DIR):
-        kong_files = len([f for f in os.listdir(KONG_DIR) if f.endswith(".yaml")])
+    if os.path.isdir(kong_dir):
+        kong_files = len([f for f in os.listdir(kong_dir) if f.endswith(".yaml")])
 
     now = datetime.now().strftime("%B %d, %Y %H:%M")
 
@@ -694,8 +693,23 @@ function filterTable() {{
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Generate an HTML migration report for IBM API Connect to Kong Gateway."
+    )
+    parser.add_argument(
+        "--api-dir",
+        default="stef-ibm2kong/api",
+        help="Directory containing IBM API Connect YAML specs (default: stef-ibm2kong/api)",
+    )
+    parser.add_argument(
+        "--kong-dir",
+        default="stef-ibm2kong/kong-output",
+        help="Directory containing generated Kong YAML files (default: stef-ibm2kong/kong-output)",
+    )
+    args = parser.parse_args()
+
     print("Analyzing IBM API Connect files...")
-    data = analyze_apis()
+    data = analyze_apis(args.api_dir, args.kong_dir)
 
     # Save analysis JSON
     with open("migration_analysis.json", "w") as f:
@@ -722,7 +736,7 @@ def main():
 
     # Generate HTML report
     print("\nGenerating HTML report...")
-    html = generate_html_report(data)
+    html = generate_html_report(data, args.kong_dir)
     report_path = "migration_report.html"
     with open(report_path, "w") as f:
         f.write(html)

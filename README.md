@@ -55,10 +55,19 @@ Analyses all IBM API YAML files and their generated Kong output to produce an in
 **Usage:**
 
 ```bash
+# Use default directories
 python3 generate_report.py
+
+# Override input/output directories
+python3 generate_report.py --api-dir path/to/api --kong-dir path/to/kong-output
 ```
 
-Reads from `stef-ibm2kong/api/` and `stef-ibm2kong/kong-output/`. Output is written to `migration_report.html`.
+| Argument | Default | Description |
+|---|---|---|
+| `--api-dir` | `stef-ibm2kong/api` | Directory containing IBM API Connect YAML specs |
+| `--kong-dir` | `stef-ibm2kong/kong-output` | Directory containing generated Kong YAML files |
+
+Output is written to `migration_report.html` and `migration_analysis.json` in the current directory.
 
 ---
 
@@ -131,6 +140,8 @@ python3 organize_output.py
 
 # 6. Generate the HTML migration report
 python3 generate_report.py
+# or with custom directories:
+python3 generate_report.py --api-dir my/api/dir --kong-dir my/kong/dir
 ```
 
 ## Output format
